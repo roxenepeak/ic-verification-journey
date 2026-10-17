@@ -1,0 +1,17 @@
+# simulator-generated files (run clean.bat to delete them locally)
+work/
+xsim.dir/
+xsim.covdb/
+cc_dir/
+fc_report/
+cc_report/
+.Xil/
+*.log
+*.jou
+*.pb
+*.wdb
+*.str
+webtalk*
+dfx_runtime.txt
+hs_err_pid*
+*.zip
