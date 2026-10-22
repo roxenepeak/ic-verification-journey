@@ -27,7 +27,7 @@ module tb_adder4;
     // TODO 2：算出 exp，和 {cout, sum} 比较；
     //不相等就打印 a、b、cin、期望值、实际值，并让 err_cnt 加 1
     exp = ref_add(a,b,cin);
-    if(exp!={cout,sum}) begin
+    if(exp!=={cout,sum}) begin
       err_cnt = err_cnt+1;
       $display("ERROR:a:%h b:%h cin:%h exp:%h prac:%h",a,b,cin,exp,{cout,sum});
     end
