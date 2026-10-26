@@ -17,12 +17,13 @@ module tb_dff_reset;
   always #5 clk = ~clk;
   // TODO：check task —— 输入期望值 exp_s、exp_a 和场景名 name（测试场景），
   //       不一致则 err_cnt++ 并打印 时间/场景/期望/实际
+  int chk_cnt = 0;
   task automatic check(input logic exp_s,input logic exp_a,input string name);
     if(q_s!==exp_s || q_a!== exp_a) begin
       err_cnt++;
-      $display("time:%0t,name:%s,exp_s:%d,exp_a:%d,q_s:%d,q_a:%d",$time,name,exp_s,exp_a,q_s,q_a);
+      $display("time:%0t,name:%s,exp_s:%b,exp_a:%b,q_s:%b,q_a:%b",$time,name,exp_s,exp_a,q_s,q_a);
     end
-    
+    chk_cnt++;
   endtask
 
 
@@ -44,10 +45,10 @@ module tb_dff_reset;
     // TODO
     @(negedge clk)
     rst_n = 0;
-    #1
-    check(1'b1,1'b0,"test1");//因为同步复位下一个上升沿没到来，值还是1'b1，而异步复位只用rst_n和上升沿一个到达即可
+    #1;
+    check(1'b1,1'b0,"test1");//因为同步复位下一个上升沿没到来，值还是1'b1，而异步复位不需要任何时钟沿，只要rst_n拉低（电平），q立刻清零
     @(posedge clk);
-    #1
+    #1;
     check(1'b0,1'b0,"test2");//下一个上升沿到来，值变为1'b0;
 
     // ---------- 场景 2：复位期间 d 变化 ----------
@@ -56,11 +57,12 @@ module tb_dff_reset;
     // TODO
     d=0;
     @(posedge clk);
+    #1;
     d=1;
-    #1
+    #1;
     check(1'b0,1'b0,"test3");
     @(posedge clk);
-    #1
+    #1;
     check(1'b0,1'b0,"test4");
 
     // ---------- 场景 3：释放复位后恢复采样 ----------
@@ -70,17 +72,17 @@ module tb_dff_reset;
     // TODO
     @(negedge clk);
     rst_n=1;d=1;
-    #1
+    #1;
     check(1'b0,1'b0,"test5");
     @(posedge clk);
-    #1
+    #1;
     check(1'b1,1'b1,"test6");
 
     // TODO：汇总，err_cnt==0 打印 PASS，否则打印错误数
     if(err_cnt)
       $display("Fail:%0d errors",err_cnt);
     else
-      $display("PASS");
+      $display("PASS(%d checks)",chk_cnt);
     $finish;
   end
 endmodule
