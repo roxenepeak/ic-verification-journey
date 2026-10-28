@@ -39,14 +39,14 @@ module tb_shift4;
   
   function automatic logic[3:0] get_next_exp_q();
 
-  logic [3:0] next_exp_q;//参考模型的中间变量
-    case(mode)
-      2'b00:next_exp_q = exp_q;
-      2'b01:next_exp_q = {si_r,exp_q[3:1]};
-      2'b10:next_exp_q = {exp_q[2:0],si_l};
-      2'b11:next_exp_q = d;
-    endcase
-  return next_exp_q;  
+    logic [3:0] next_exp_q;//参考模型的中间变量
+      case(mode)
+        2'b00:next_exp_q = exp_q;
+        2'b01:next_exp_q = {si_r,exp_q[3:1]};
+        2'b10:next_exp_q = {exp_q[2:0],si_l};
+        2'b11:next_exp_q = d;
+      endcase
+    return next_exp_q;  
 
   endfunction
 
