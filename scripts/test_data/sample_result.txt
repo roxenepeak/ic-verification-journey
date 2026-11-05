@@ -1,0 +1,7 @@
+PASS seed:1 checkCnt:2019 writeCnt:381 readCnt:502 readPreAddrCnt:27
+PASS seed:123 checkCnt:2019 writeCnt:377 readCnt:502 readPreAddrCnt:15
+time=1234000,rdata=x,expRdata=5,handExpRdata=5
+ERROR errCnt:1 seed:7 checkCnt:2019 writeCnt:390 readCnt:488 readPreAddrCnt:9
+PASS seed:123 checkCnt:2019 writeCnt:377 readCnt:502 readPreAddrCnt:15
+PASS seed:42 checkCnt:2019 writeCnt:366 readCnt:511 readPreAddrCnt:12
+PASS seed:42 checkCnt:2019 writeCnt:366 readCnt:510 readPreAddrCnt:12
