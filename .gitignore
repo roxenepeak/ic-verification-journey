@@ -15,3 +15,6 @@ dfx_runtime.txt
 webtalk*
 *.zip
 summary.txt
+
+# mycpu 有自己的私有仓库，不进这个作品集仓库
+project/
