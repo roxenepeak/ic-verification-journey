@@ -47,12 +47,18 @@ def main():
             else:
                 failCnt += 1
 
-     # TODO：打印表格，每次运行一行
-    keys = ['result', 'seed', 'errCnt', 'checkCnt', 'writeCnt', 'readCnt', 'readPreAddrCnt']
+    # TODO：打印表格，每次运行一行
+    # 不规定字段：日志里出现什么字段就打印什么字段
+    # 常用的几列（日志里有的话）放在前面，其余字段按第一次出现的顺序排在后面
+    keys = [k for k in ['result', 'seed', 'errCnt', 'checkCnt'] if any(k in r for r in runs)]
+    for r in runs:
+        for k in r:
+            if k not in keys:
+                keys.append(k)
     #'分隔符'.join(列表)：把列表里的元素依次连起来，相邻两个元素之间插入前面那个分隔符
     print('\t'.join(keys))                          # 表头，列之间用 Tab 隔开
     for r in runs:
-        print('\t'.join(r[k] for k in keys))        # 每次运行一行
+        print('\t'.join(r.get(k, '-') for k in keys))  # 每次运行一行；某次运行缺这个字段时显示 -
 
     # TODO：打印汇总：运行次数、PASS 次数、FAIL 次数、跳过的行数
     #f'后面接{}，{}里面的内容会转换为字符串
@@ -61,6 +67,8 @@ def main():
     # TODO：复现检查：同一个 seed 出现多次时，比较各次结果是否完全一样
     by_seed = {}                                    # 按 seed 分组：键是 seed，值是这个 seed 的所有运行
     for r in runs:                                  # 遍历每次运行
+        if 'seed' not in r:                         # 日志里没有 seed 字段的运行没法做复现检查，跳过
+            continue
         by_seed.setdefault(r['seed'], []).append(r) # 没有这个 seed 就先建空列表，再把这次运行加进去
     for seed, rs in by_seed.items():                # 逐个 seed 检查，rs 是这个 seed 的所有运行
         if len(rs) < 2:                             # 只跑过一次，没法比较
@@ -70,7 +78,7 @@ def main():
         else:                                       # 至少有一次不同
             summary.append(f'seed {seed}：运行 {len(rs)} 次，结果不一致')
             for r in rs:                            # 列出这个 seed 的每次结果，方便对比
-                summary.append('    ' + '\t'.join(r[k] for k in keys))  # 缩进 4 格，按表头顺序用 Tab 连成一行
+                summary.append('    ' + '\t'.join(r.get(k, '-') for k in keys))  # 缩进 4 格，按表头顺序用 Tab 连成一行
 
     for s in summary:#summary是一个列表，循环打印会依次打印列表中的元素，也可以直接打印这个列表，打印出来是一行的效果
         print(s)
