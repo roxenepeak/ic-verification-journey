@@ -36,7 +36,7 @@ module tb_gray_cnt_sync;
   logic [W-1:0] pre_cnt_a_f2s;//记录上一拍的cnt_a
   logic [W-1:0] pre_cnt_b_f2s;//记录上一拍的cnt_b
   int           b_change_cnt_f2s=0;//记录cnt_b的变化次数
-  int           max_jump_cnt=0;//统计最多跳过值的次数（快到慢独有）
+  int           max_jump_cnt=0;//一次最多跳过几个值（快到慢独有）
   // 方向 2：慢 → 快
   logic         inc_s2f;
   logic [W-1:0] cnt_a_s2f, cnt_b_s2f;
@@ -75,13 +75,12 @@ module tb_gray_cnt_sync;
       pre_cnt_a_f2s<=0;
     end
     else begin
-      //存储当前拍的数据
+      //存下一拍cnt_a的期望值（当前值+inc）
       if(inc_f2s) begin 
         pre_cnt_a_f2s<=cnt_a_f2s+1;
       end
       else pre_cnt_a_f2s<=cnt_a_f2s;
-      //判断上一拍的数据是否出错
-      //pre_cnt_a_f2s就是这一拍还没变化的cnt_a_f2s
+      //检查：这一拍的cnt_a应等于上一拍存的期望值
       if(pre_cnt_a_f2s!==cnt_a_f2s) error_cnt_f2s++; 
     end
   end
@@ -95,7 +94,7 @@ module tb_gray_cnt_sync;
         pre_cnt_a_s2f<=cnt_a_s2f+1;
       end
       else pre_cnt_a_s2f<=cnt_a_s2f;
-      //判断上一拍的数据是否出错
+      //检查：这一拍的cnt_a应等于上一拍存的期望值
       if(pre_cnt_a_s2f!==cnt_a_s2f) error_cnt_s2f++;
     end
   end
@@ -114,11 +113,11 @@ module tb_gray_cnt_sync;
       pre_cnt_b_f2s<=cnt_b_f2s;
       if(pre_cnt_b_f2s!==cnt_b_f2s) begin
         b_change_cnt_f2s++;
-        //快到慢可以跳过中间值，每次变化不一定是1；只需检查两点：b没有跑到a前面（b落后a不超过12），b没有倒退（一个慢周期最多前进3）
-        //注意右边的常数不能直接写12和3（32位），否则左边的减法会按32位计算，回绕时结果错误；写成4'd12、4'd3后按4位计算，自动按16取模（也可以把左边写成W'(...)）
+        //快到慢允许跳值，只检查：b落后a不超过12（不能跑到a前面）、每次最多前进3（不能倒退）
+        //常数写成4'd，减法才按4位算（自动按16取模，回绕也对）；直接写12会按32位算
         if(cnt_a_f2s-cnt_b_f2s>4'd12||cnt_b_f2s-pre_cnt_b_f2s>4'd3)
           error_cnt_f2s++;
-        //b这一步前进了几个（W位差值，回绕也对），减1就是这一步跳过了几个值，取最大值
+        //这一步前进的值减1 = 跳过了几个值，取最大
         if(W'(cnt_b_f2s-pre_cnt_b_f2s)-1>max_jump_cnt) max_jump_cnt=W'(cnt_b_f2s-pre_cnt_b_f2s)-1;
       end
     end
@@ -171,8 +170,8 @@ module tb_gray_cnt_sync;
       repeat(2) @(posedge clk_fast);
       repeat(2) @(posedge clk_slow);
     join
-    if(cnt_a_f2s||cnt_b_f2s) error_cnt_f2s++;
-    if(cnt_a_s2f||cnt_b_s2f) error_cnt_s2f++;
+    if(cnt_a_f2s!==0||cnt_b_f2s!==0) error_cnt_f2s++;
+    if(cnt_a_s2f!==0||cnt_b_s2f!==0) error_cnt_s2f++;
     fork
       begin @(negedge clk_fast); rst_fast=1'b0;end
       begin @(negedge clk_slow); rst_slow=1'b0;end
