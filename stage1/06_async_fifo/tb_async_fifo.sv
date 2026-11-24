@@ -156,14 +156,14 @@ module tb_async_fifo;
   task automatic write_f2s(logic wr_en=1'b1); 
     @(negedge clk_fast);
     rst_fast=1'b0;wr_en_f2s=wr_en;wdata_f2s=$urandom();
-    @(negedge clk_fast);
+    @(posedge clk_fast) #1;//等到上升沿采样完成后拉低，既可以满足连续读取也可以满足非连续读取
     wr_en_f2s=1'b0;
   endtask
   //读
   task automatic read_f2s(logic rd_en=1'b1);
     @(negedge clk_slow);
     rst_slow=1'b0;rd_en_f2s=rd_en;
-    @(negedge clk_slow);
+    @(posedge clk_slow) #1;
     rd_en_f2s=1'b0;
   endtask
   //快读慢写
@@ -171,16 +171,32 @@ module tb_async_fifo;
   task automatic write_s2f(logic wr_en=1'b1);
     @(negedge clk_slow);
     rst_slow=1'b0;wr_en_s2f=wr_en;wdata_s2f=$urandom();
-    @(negedge clk_slow);
+    @(posedge clk_slow) #1;
     wr_en_s2f=1'b0;
   endtask
   //读
   task automatic read_s2f(logic rd_en=1'b1);
     @(negedge clk_fast);
     rst_fast=1'b0;rd_en_s2f=rd_en;
-    @(negedge clk_fast);
+    @(posedge clk_fast) #1;
     rd_en_s2f=1'b0;
   endtask
+
+    //随机阶段的读写概率（%），按成功写入数每 1000 个换一段：写多读少 → 读多写少 → 一样多
+  function automatic int wr_prob(int cnt);
+    case((cnt/1000)%3)
+      0: return 90;
+      1: return 10;
+      default: return 50;
+    endcase
+  endfunction
+  function automatic int rd_prob(int cnt);
+    case((cnt/1000)%3)
+      0: return 10;
+      1: return 90;
+      default: return 50;
+    endcase
+  endfunction
 
   initial begin
     // TODO：从 +seed=N 读入种子（不传用默认值）并打印；打开 sim_result.txt（追加）
@@ -251,14 +267,15 @@ module tb_async_fifo;
     fork
       begin
         fork
-            repeat(3000) write_f2s($urandom());
-            repeat(3000) read_f2s($urandom());
+            //成功读写1000次后就更换读写的概率
+            while(success_wcnt_f2s<TRANS_NUM) write_f2s($urandom_range(0,99)<wr_prob(success_wcnt_f2s));
+            while(success_rcnt_f2s<TRANS_NUM) read_f2s($urandom_range(0,99)<rd_prob(success_wcnt_f2s));
         join
       end
       begin
         fork
-            repeat(3000) write_s2f($urandom());
-            repeat(3000) read_s2f($urandom());
+            while(success_wcnt_s2f<TRANS_NUM) write_s2f($urandom_range(0,99)<wr_prob(success_wcnt_s2f));
+            while(success_rcnt_s2f<TRANS_NUM) read_s2f($urandom_range(0,99)<rd_prob(success_wcnt_s2f));
         join
       end
     join
